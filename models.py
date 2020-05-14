@@ -448,20 +448,26 @@ class SumsRUR(models.Model):
         verbose_name="Контракт",
         on_delete=models.DO_NOTHING
     )
-    start_max_price_ASEZ_NDS = models.PositiveIntegerField(
+    start_max_price_ASEZ_NDS = models.DecimalField(
         verbose_name="стартовая цена АСЭЗ с НДС ",
         null=True,
-        blank=True
+        blank=True,
+        decimal_places=2,
+        max_digits=20
     )
-    currency_rate_on_load_date_ASEZ_NDS = models.FloatField(
+    currency_rate_on_load_date_ASEZ_NDS = models.DecimalField(
         verbose_name="Курс валюты на дату загрузки в бел.руб.",
         null=True,
-        blank=True
+        blank=True,
+        decimal_places=10,
+        max_digits=20
     )
-    contract_sum_NDS_RUB = models.FloatField(
+    contract_sum_NDS_RUB = models.DecimalField(
         verbose_name="Сумма договора с НДС рос.руб.",
         blank=True,
-        null=True
+        null=True,
+        decimal_places=2,
+        max_digits=20
     )
     currency = models.ForeignKey(
         Currency,
@@ -470,11 +476,14 @@ class SumsRUR(models.Model):
         blank=True,
         null=True
     )
-    delta_data_ASEZ = models.FloatField(
+    delta_data_ASEZ = models.DecimalField(
         verbose_name="Отклонение от НМЦ в АСЭЗ",
         blank=True,
-        null=True
+        null=True,
+        decimal_places=2,
+        max_digits=20
     )
+    #sum_byn = models.ForeignKey("SumsBYN", on_delete=models.DO_NOTHING)
 
     def __str__(self):
         try:
@@ -482,12 +491,26 @@ class SumsRUR(models.Model):
         except:
             return 'Ошибка в данных'
 
+    def save(self, *args, **kwargs):
+        #self.sum_byn = self.sum_byn.contract_sum_with_NDS_BYN
+        #sum_byn = SumsBYN.objects.filter(contract=self.contract).contract_sum_with_NDS_BYN
+        #self.contract_sum_NDS_RUB = sum_byn * self.currency_rate_on_load_date_ASEZ_NDS
+        super().save(*args, **kwargs)
+
+
     class Meta:
         verbose_name = 'Показатели договора в российских рублях'
         verbose_name_plural = 'Показатели договора в российских рублях'
 
 
 class SumsBYN(models.Model):
+    YEARS = [
+        ("2018", "2018"),
+        ("2019", "2019"),
+        ("2020", "2020"),
+        ("2021", "2021"),
+        ("2022", "2022")
+    ]
     PERIODS = [
         ("year", "year"),
         ("1quart", "1 quarter"),
@@ -516,61 +539,84 @@ class SumsBYN(models.Model):
         on_delete=models.DO_NOTHING,
         verbose_name="Контракт"
     )
-    year = models.DateField(
-        verbose_name="Год"
+    year = models.CharField(
+        verbose_name="Год",
+        choices=YEARS,
+        max_length=4
     )
-    period = models.PositiveIntegerField(
+    period = models.CharField(
         choices=PERIODS,
-        verbose_name="Период"
+        verbose_name="Период",
+        max_length=15
     )
-    plan_sum_SAP = models.FloatField(
+    plan_sum_SAP = models.DecimalField(
         verbose_name="Плановая сумма САП",
         blank=True,
-        null=True
+        null=True,
+        decimal_places=2,
+        max_digits=20
     )
-    contract_sum_without_NDS_BYN = models.FloatField(
+    contract_sum_without_NDS_BYN = models.DecimalField(
         verbose_name="Сумма всего договора без НДС",
-        default=0
+        default=0,
+        decimal_places=2,
+        max_digits=20
     )
-    contract_sum_with_NDS_BYN = models.FloatField(
+    contract_sum_with_NDS_BYN = models.DecimalField(
         verbose_name="Сумма договора с НДС бел.руб.",
         blank=True,
-        null=True
+        null=True,
+        decimal_places=2,
+        max_digits=20
     )
-    contract_total_sum_with_sub_BYN = models.FloatField(
+    contract_total_sum_with_sub_BYN = models.DecimalField(
         verbose_name='Общая сумма договора всего с доп соглашениями, б.р. без ндс',
         null=True,
         blank=True,
+        decimal_places=2,
+        max_digits=20
     )
-    forecast_total = models.FloatField(
+    forecast_total = models.DecimalField(
         verbose_name='Прогноз, всего',
         blank=True,
-        null=True
+        null=True,
+        decimal_places=2,
+        max_digits=20
     )
-    economy_total = models.FloatField(
+    economy_total = models.DecimalField(
         verbose_name='Экономия по заключенному договору, всего',
         blank=True,
-        null=True
+        null=True,
+        decimal_places=2,
+        max_digits=20
     )
-    fact_total = models.FloatField(
+    fact_total = models.DecimalField(
         verbose_name='Факт, всего',
         blank=True,
-        null=True
+        null=True,
+        decimal_places=2,
+        max_digits=20
     )
-    economy_contract_result = models.FloatField(
+    economy_contract_result = models.DecimalField(
         verbose_name='Экономия по результатам исполнения договоров всего',
         blank=True,
-        null=True
+        null=True,
+        decimal_places=2,
+        max_digits=20
     )
-    total_sum_unsigned_contracts = models.FloatField(
+    total_sum_unsigned_contracts = models.DecimalField(
         verbose_name='Сумма средств по незаключенным договорам',
         blank=True,
-        null=True
+        null=True,
+        decimal_places=2,
+        max_digits=20
     )
-    economy_total_absolute = models.FloatField(
+    economy_total_absolute = models.DecimalField(
         verbose_name='Абсолютная экономия по договору, всего',
         blank=True,
-        null=True
+        null=True,
+        decimal_places=2,
+        max_digits=20
     )
 
     def __str__(self):
@@ -628,12 +674,20 @@ class ContractRemarks(models.Model):
 
 
 class Planning(models.Model):
-    PERIODS = [
-        ("year", "year"),
-        ("1quart", "1 quarter"),
-        ("2quart", "2 quarter"),
-        ("3quart", "3 quarter"),
-        ("4quart", "4 quarter")
+    # PERIODS = [
+    #     ("year", "year"),
+    #     ("1quart", "1 quarter"),
+    #     ("2quart", "2 quarter"),
+    #     ("3quart", "3 quarter"),
+    #     ("4quart", "4 quarter")
+    # ]
+
+    YEARS = [
+        ("2018", "2018"),
+        ("2019", "2019"),
+        ("2020", "2020"),
+        ("2021", "2021"),
+        ("2022", "2022")
     ]
     FinanceCosts = models.ForeignKey(
         FinanceCosts,
@@ -645,17 +699,21 @@ class Planning(models.Model):
         verbose_name="Куратор",
         on_delete=models.DO_NOTHING
     )
-    year = models.DateField(
-        verbose_name="Год"
+    year = models.CharField(
+        verbose_name="Год",
+        choices=YEARS,
+        max_length=15
     )
-    period = models.PositiveIntegerField(
-        choices=PERIODS,
-        verbose_name="Период"
-    )
-    total = models.FloatField(
-        verbose_name="Сумма, Лимит средств",
-        default=0
-    )
+    # period = models.PositiveIntegerField(
+    #     choices=PERIODS,
+    #     verbose_name="Период"
+    # )
+    # total = models.DecimalField(
+    #     verbose_name="Сумма, Лимит средств",
+    #     default=0,
+    #     decimal_places=2,
+    #     max_digits=20
+    # )
     currency = models.ForeignKey(
         Currency,
         verbose_name="Валюта",
@@ -663,14 +721,58 @@ class Planning(models.Model):
         null=True,
         on_delete=models.DO_NOTHING
     )
+    q_1 = models.DecimalField(
+        verbose_name="Сумма лимита 1 квартал",
+        max_digits=20,
+        decimal_places=2,
+        default=0,
+        null=True
+    )
+    q_2 = models.DecimalField(
+        verbose_name="Сумма лимита 2 квартал",
+        max_digits=20,
+        decimal_places=2,
+        default=0,
+        null=True
+    )
+    q_3 = models.DecimalField(
+        verbose_name="Сумма лимита 3 квартал",
+        max_digits=20,
+        decimal_places=2,
+        default=0,
+        null=True
+    )
+    q_4 = models.DecimalField(
+        verbose_name="Сумма лимита 4 квартал",
+        max_digits=20,
+        decimal_places=2,
+        default=0,
+        null=True
+    )
+    q_all = models.DecimalField(
+        verbose_name="Сумма лимита за весь год",
+        max_digits=20,
+        decimal_places=2,
+        default=0,
+        null=True
+    )
     def __str__(self):
         try:
-            return 'Планирование %s год, %s квартал по куратору %s, ст. фин %s' % (self.year,
-                                                                                   self.period,
-                                                                                   self.curator,
-                                                                                   self.FinanceCosts)
+            return 'Планирование %s год, по куратору %s, ст. фин %s' % (self.year, self.curator, self.FinanceCosts)
         except:
             return 'Ошибка в данных'
+
+    def get_finance_costs(self, *args, **kwargs):
+        # all_finance_costs = Planning.objects.filter(FinanceCosts=self.FinanceCosts)
+        # if not all_finance_costs:
+        all_finance_costs = Planning.create(FinanceCosts=self.FinanceCosts, year=self.year, curator='All')
+        return all_finance_costs
+
+
+
+    def save(self, *args, **kwargs):
+        self.q_all = self.q_1 + self.q_2 + self.q_3 + self.q_4
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Планирование'
@@ -704,23 +806,35 @@ class AnalysisPlanFulfilmentSums(models.Model):
         on_delete=models.DO_NOTHING,
         verbose_name="Куратор/Подразделение"
     )
-    plannned_sum = models.FloatField(
-        verbose_name="Лимит средств (запланировано БПиЭА)"
+    plannned_sum = models.DecimalField(
+        verbose_name="Лимит средств (запланировано БПиЭА)",
+        decimal_places=2,
+        max_digits=20
     )
-    contract_planned_sum = models.FloatField(
-        verbose_name="План по всем договорам"
+    contract_planned_sum = models.DecimalField(
+        verbose_name="План по всем договорам",
+        decimal_places=2,
+        max_digits=20
     )
-    signed_contract_sum = models.FloatField(
-        verbose_name="Сумма заключенных договоров"
+    signed_contract_sum = models.DecimalField(
+        verbose_name="Сумма заключенных договоров",
+        decimal_places=2,
+        max_digits=20
     )
-    fact_contract_sum = models.FloatField(
-        verbose_name="Фактическое выполнение всех договоров"
+    fact_contract_sum = models.DecimalField(
+        verbose_name="Фактическое выполнение всех договоров",
+        decimal_places=2,
+        max_digits=20
     )
-    forecast_contract_sum = models.FloatField(
-        verbose_name="Прогноз выполнения всех договоров"
+    forecast_contract_sum = models.DecimalField(
+        verbose_name="Прогноз выполнения всех договоров",
+        decimal_places=2,
+        max_digits=20
     )
-    percent_of_contracts_fulfilment = models.FloatField(
-        verbose_name="Процент выполнения плана"
+    percent_of_contracts_fulfilment = models.DecimalField(
+        verbose_name="Процент выполнения плана",
+        decimal_places=2,
+        max_digits=20
     )
 
     def __str__(self):
@@ -819,38 +933,60 @@ class DeltaAnalysis(models.Model):
         on_delete=models.DO_NOTHING,
         verbose_name="Куратор/Подразделение"
     )
-    delta_limit_plan_sum_sap = models.FloatField(
-        verbose_name="Отклонение: Лимит - Плановая сумма САП"
+    delta_limit_plan_sum_sap = models.DecimalField(
+        verbose_name="Отклонение: Лимит - Плановая сумма САП",
+        decimal_places=2,
+        max_digits=20
     )
-    delta_limit_signed_contracts_sum = models.FloatField(
-        verbose_name="Отклонение: Лимит - Сумма заключенных договоров"
+    delta_limit_signed_contracts_sum = models.DecimalField(
+        verbose_name="Отклонение: Лимит - Сумма заключенных договоров",
+        decimal_places=2,
+        max_digits=20
     )
-    delta_limit_forecast = models.FloatField(
-        verbose_name="Отклонение: Лимит - Прогноз выполнения договоров"
+    delta_limit_forecast = models.DecimalField(
+        verbose_name="Отклонение: Лимит - Прогноз выполнения договоров",
+        decimal_places=2,
+        max_digits=20
     )
-    delta_limit_fact = models.FloatField(
-        verbose_name="Отклонение: Лимит - Фактическое выполнение договоров"
+    delta_limit_fact = models.DecimalField(
+        verbose_name="Отклонение: Лимит - Фактическое выполнение договоров",
+        decimal_places=2,
+        max_digits=20
     )
-    delta_plan_sum_sap_signed_contracts_sum = models.FloatField(
-        verbose_name="Отклонение: Плановая сумма САП - Сумма заключенных договоров"
+    delta_plan_sum_sap_signed_contracts_sum = models.DecimalField(
+        verbose_name="Отклонение: Плановая сумма САП - Сумма заключенных договоров",
+        decimal_places=2,
+        max_digits=20
     )
-    delta_plan_sum_sap_forecast = models.FloatField(
-        verbose_name="Отклонение: Плановая сумма САП - Прогноз по всем договорам"
+    delta_plan_sum_sap_forecast = models.DecimalField(
+        verbose_name="Отклонение: Плановая сумма САП - Прогноз по всем договорам",
+        decimal_places=2,
+        max_digits=20
     )
-    delta_plan_sum_sap_forecast_signed_contracts = models.FloatField(
-        verbose_name="Отклонение: Плановая сумма САП - Прогноз по заключенным договорам"
+    delta_plan_sum_sap_forecast_signed_contracts = models.DecimalField(
+        verbose_name="Отклонение: Плановая сумма САП - Прогноз по заключенным договорам",
+        decimal_places=2,
+        max_digits=20
     )
-    delta_plan_sum_sap_fact = models.FloatField(
-        verbose_name="Отклонение: Плановая сумма САП - Фактическое выполнение договоров"
+    delta_plan_sum_sap_fact = models.DecimalField(
+        verbose_name="Отклонение: Плановая сумма САП - Фактическое выполнение договоров",
+        decimal_places=2,
+        max_digits=20
     )
-    delta_signed_contracts_sum_forecat = models.FloatField(
-        verbose_name="Отклонение: Сумма заключенных договоров - Прогноз исполнения заключенных договоров"
+    delta_signed_contracts_sum_forecat = models.DecimalField(
+        verbose_name="Отклонение: Сумма заключенных договоров - Прогноз исполнения заключенных договоров",
+        decimal_places=2,
+        max_digits=20
     )
-    delta_signed_contracts_sum_fact = models.FloatField(
-        verbose_name="Отклонение: Сумма заключенных договоров - Фактическое исполнение"
+    delta_signed_contracts_sum_fact = models.DecimalField(
+        verbose_name="Отклонение: Сумма заключенных договоров - Фактическое исполнение",
+        decimal_places=2,
+        max_digits=20
     )
-    delta_forecast_fact = models.FloatField(
-        verbose_name="Отклонение: Прогноз по всем договорам - Фактическое исполнение"
+    delta_forecast_fact = models.DecimalField(
+        verbose_name="Отклонение: Прогноз по всем договорам - Фактическое исполнение",
+        decimal_places=2,
+        max_digits=20
     )
     def __str__(self):
         try:
