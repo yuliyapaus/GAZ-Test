@@ -86,9 +86,11 @@ class UserActivityJournal(models.Model):
     user = models.ForeignKey(
         User,
         verbose_name="Пользователь",
-        on_delete=models.DO_NOTHING)
+        on_delete=models.CASCADE
+    )
     date_time_of_activity = models.DateTimeField(
-        verbose_name="Дата и время работы пользователя в системе"
+        verbose_name="Дата и время работы пользователя в системе",
+        auto_now_add=True
     )
     activity = models.CharField(
         max_length=200,
@@ -98,8 +100,7 @@ class UserActivityJournal(models.Model):
     )
     clicks = models.PositiveIntegerField(
         verbose_name="Количество кликов пользователя",
-        blank=True,
-        null=True
+        default=0
     )
     activity_system_module = models.CharField(
         max_length=100,
@@ -522,6 +523,7 @@ class SumsBYN(models.Model):
     class Meta:
         verbose_name = 'Показатели договора в белорусских рублях'
         verbose_name_plural = 'Показатели договора в белорусских рублях'
+        unique_together = [['contract', 'year', 'period']]
 
     YEARS = [
         ("2018", "2018"),
@@ -640,17 +642,6 @@ class SumsBYN(models.Model):
         decimal_places=2,
         max_digits=12
     )
-
-    def save(self, *args, **kwargs):
-        self.economy_total = self.plan_sum_SAP - self.contract_sum_without_NDS_BYN
-        self.economy_contract_result = self.contract_sum_without_NDS_BYN - self.plan_sum_SAP
-        if self.contract_sum_without_NDS_BYN:
-            self.economy_total_absolute = self.plan_sum_SAP - self.contract_sum_without_NDS_BYN
-            self.total_sum_unsigned_contracts = 0
-        else:
-            self.economy_total_absolute = 0
-            self.total_sum_unsigned_contracts = self.plan_sum_SAP
-        super().save(*args, **kwargs)
 
     def __str__(self):
         try:
