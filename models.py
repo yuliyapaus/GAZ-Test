@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.shortcuts import reverse
+
 
 class Curator(models.Model):
     class Meta:
@@ -12,10 +14,7 @@ class Curator(models.Model):
     )
 
     def __str__(self):
-        try:
-            return str(self.title)
-        except:
-            return 'Ошибка в данных'
+        return self.title.__str__()
 
 
 class UserTypes(models.Model):
@@ -30,10 +29,7 @@ class UserTypes(models.Model):
     )
 
     def __str__(self):
-        try:
-            return str(self.title)
-        except:
-            return 'Ошибка в данных'
+        return self.title.__str__()
 
 
 class CustomUser(models.Model):
@@ -72,10 +68,7 @@ class CustomUser(models.Model):
     )
 
     def __str__(self):
-        try:
-            return str(self.user)
-        except:
-            return 'Ошибка в данных'
+        return self.user.__str__()
 
 
 class UserActivityJournal(models.Model):
@@ -86,9 +79,11 @@ class UserActivityJournal(models.Model):
     user = models.ForeignKey(
         User,
         verbose_name="Пользователь",
-        on_delete=models.DO_NOTHING)
+        on_delete=models.CASCADE
+    )
     date_time_of_activity = models.DateTimeField(
-        verbose_name="Дата и время работы пользователя в системе"
+        verbose_name="Дата и время работы пользователя в системе",
+        auto_now_add=True
     )
     activity = models.CharField(
         max_length=200,
@@ -98,8 +93,7 @@ class UserActivityJournal(models.Model):
     )
     clicks = models.PositiveIntegerField(
         verbose_name="Количество кликов пользователя",
-        blank=True,
-        null=True
+        default=0
     )
     activity_system_module = models.CharField(
         max_length=100,
@@ -109,7 +103,7 @@ class UserActivityJournal(models.Model):
 
     def __str__(self):
         try:
-            return 'Журнал действий пользователя: %s' % (self.user)
+            return f'Журнал действий пользователя: {self.user}'
         except:
             return 'Ошибка в данных'
 
@@ -123,12 +117,8 @@ class FinanceCosts(models.Model):
         verbose_name="Название статьи",
         max_length=100
     )
-
     def __str__(self):
-        try:
-            return str(self.title)
-        except:
-            return 'Ошибка в данных'
+        return self.title
 
 
 class PurchaseType(models.Model):
@@ -142,10 +132,7 @@ class PurchaseType(models.Model):
     )
 
     def __str__(self):
-        try:
-            return str(self.title)
-        except:
-            return 'Ошибка в данных'
+        return self.title.__str__()
 
 
 class ActivityForm(models.Model):
@@ -159,10 +146,7 @@ class ActivityForm(models.Model):
     )
 
     def __str__(self):
-        try:
-            return str(self.title)
-        except:
-            return 'Ошибка в данных'
+        return self.title.__str__()
 
 
 class StateASEZ(models.Model):
@@ -176,10 +160,7 @@ class StateASEZ(models.Model):
     )
 
     def __str__(self):
-        try:
-            return str(self.title)
-        except:
-            return 'Ошибка в данных'
+        return self.title.__str__()
 
 
 class NumberPZTRU(models.Model):
@@ -193,10 +174,7 @@ class NumberPZTRU(models.Model):
     )
 
     def __str__(self):
-        try:
-            return str(self.title)
-        except:
-            return 'Ошибка в данных'
+        return self.title.__str__()
 
 
 class ContractStatus(models.Model):
@@ -210,10 +188,7 @@ class ContractStatus(models.Model):
     )
 
     def __str__(self):
-        try:
-            return str(self.title)
-        except:
-            return 'Ошибка в данных'
+        return self.title.__str__()
 
 
 class Currency(models.Model):
@@ -227,10 +202,7 @@ class Currency(models.Model):
     )
 
     def __str__(self):
-        try:
-            return str(self.title)
-        except:
-            return 'Ошибка в данных'
+        return self.title.__str__()
 
 
 class ContractType(models.Model):
@@ -244,10 +216,7 @@ class ContractType(models.Model):
     )
 
     def __str__(self):
-        try:
-            return str(self.title)
-        except:
-            return 'Ошибка в данных'
+        return self.title.__str__()
 
 
 class ContractMode(models.Model):
@@ -261,10 +230,7 @@ class ContractMode(models.Model):
     )
 
     def __str__(self):
-        try:
-            return str(self.title)
-        except:
-            return 'Ошибка в данных'
+        return self.title.__str__()
 
 
 class Counterpart(models.Model):
@@ -438,6 +404,9 @@ class Contract(models.Model):
         except:
             return 'Ошибка в данных'
 
+    def get_absolute_url(self):
+        return reverse('planes:change_contract', kwargs={'contract_id':self.id})
+
 
 class SumsRUR(models.Model):
     class Meta:
@@ -458,7 +427,7 @@ class SumsRUR(models.Model):
     contract = models.ForeignKey(
         Contract,
         verbose_name="Контракт",
-        on_delete=models.DO_NOTHING
+        on_delete=models.CASCADE
     )
     year = models.CharField(
         verbose_name="Год",
@@ -522,6 +491,7 @@ class SumsBYN(models.Model):
     class Meta:
         verbose_name = 'Показатели договора в белорусских рублях'
         verbose_name_plural = 'Показатели договора в белорусских рублях'
+        unique_together = [['contract', 'year', 'period']]
 
     YEARS = [
         ("2018", "2018"),
@@ -573,75 +543,246 @@ class SumsBYN(models.Model):
     )
     plan_sum_SAP = models.DecimalField(
         verbose_name="Плановая сумма САП",
-        blank=True,
-        null=True,
+        default=0,
         decimal_places=2,
-        max_digits=12
+        max_digits=12,
+        help_text='1-4 квартал - вручную; год, 6 месяцев, 9 месяцев - расчетные'
     )
     contract_sum_without_NDS_BYN = models.DecimalField(
         verbose_name="Сумма всего договора без НДС",
         default=0,
         decimal_places=2,
-        max_digits=12
+        max_digits=12,
+        help_text='1-4 квартал - вручную, год- расчетное'
     )
     contract_sum_with_NDS_BYN = models.DecimalField(
         verbose_name="Сумма договора с НДС бел.руб.",
-        blank=True,
-        null=True,
+        default=0,
         decimal_places=2,
-        max_digits=12
+        max_digits=12,
+        help_text='Год - вручную'
     )
     contract_total_sum_with_sub_BYN = models.DecimalField(
         verbose_name='Общая сумма договора всего с доп соглашениями, б.р. без ндс',
-        null=True,
-        blank=True,
+        default=0,
         decimal_places=2,
-        max_digits=12
+        max_digits=12,
+        help_text='Год - расчетное'
     )
     forecast_total = models.DecimalField(
         verbose_name='Прогноз, всего',
-        blank=True,
-        null=True,
+        default=0,
         decimal_places=2,
-        max_digits=12
+        max_digits=12,
+        help_text='Январь-декабрь - вручную, 1-4 квартал, год, 9 месяцев - расчетные'
     )
     economy_total = models.DecimalField(
         verbose_name='Экономия по заключенному договору, всего',
-        blank=True,
-        null=True,
+        default=0,
         decimal_places=2,
-        max_digits=12
+        max_digits=12,
+        help_text='1-4 квартал, год - расчетные'
     )
     fact_total = models.DecimalField(
         verbose_name='Факт, всего',
-        blank=True,
-        null=True,
+        default=0,
         decimal_places=2,
-        max_digits=12
+        max_digits=12,
+        help_text='Январь-декабрь - вручную, 1-4 квартал, год, 6 месяцев, 9 месяцев,10 месяцев - расчетные'
     )
     economy_contract_result = models.DecimalField(
         verbose_name='Экономия по результатам исполнения договоров всего',
-        blank=True,
-        null=True,
+        default=0,
         decimal_places=2,
-        max_digits=12
+        max_digits=12,
+        help_text='Год - расчетное'
     )
     total_sum_unsigned_contracts = models.DecimalField(
         verbose_name='Сумма средств по незаключенным договорам',
-        blank=True,
-        null=True,
+        default=0,
         decimal_places=2,
-        max_digits=12
+        max_digits=12,
+        help_text='Год - расчетное'
     )
     economy_total_absolute = models.DecimalField(
         verbose_name='Абсолютная экономия по договору, всего',
-        blank=True,
-        null=True,
+        default=0,
         decimal_places=2,
-        max_digits=12
+        max_digits=12,
+        help_text='Год - расчетное'
     )
 
+    def get_sums_plan_sum_SAP(self):
+        quarts = ('1quart', '2quart', '3quart', '4quart')
+        target_periods = [
+            ('year', quarts[:]),
+            ('6months', quarts[:2]),
+            ('9months', quarts[:3]),
+            ]
+        cust_dict = {}
+        custom_set = SumsBYN.objects.filter(year=self.year, contract=self.contract, period__in=quarts)
+        for entry in custom_set:
+            for custom_period in target_periods:
+                if entry.period in custom_period[1]:
+                    try:
+                        x = cust_dict[custom_period[0]]
+                        x += entry.plan_sum_SAP
+                        cust_dict[custom_period[0]] = x
+                    except:
+                        cust_dict[custom_period[0]] = entry.plan_sum_SAP
+
+        for key, value in cust_dict.items():
+            if SumsBYN.objects.filter(year=self.year, contract=self.contract, period=key).exists():
+                SumsBYN.objects.filter(year=self.year, contract=self.contract, period=key).update(
+                    plan_sum_SAP=value)
+            else:
+                SumsBYN.objects.create(
+                    year=self.year,
+                    contract=self.contract,
+                    period=key,
+                    plan_sum_SAP=value
+                )
+
+    def get_sums_contract_sum_without_NDS_BYN(self):
+        quarts = ('1quart', '2quart', '3quart', '4quart')
+        target_periods = [
+            ('year', quarts[:]),
+            ('6months', quarts[:2]),
+            ('9months', quarts[:3]),
+            ]
+        cust_dict = {}
+        custom_set = SumsBYN.objects.filter(year=self.year, contract=self.contract, period__in=quarts)
+        for entry in custom_set:
+            for custom_period in target_periods:
+                if entry.period in custom_period[1]:
+                    try:
+                        x = cust_dict[custom_period[0]]
+                        x += entry.contract_sum_without_NDS_BYN
+                        cust_dict[custom_period[0]] = x
+                    except:
+                        cust_dict[custom_period[0]] = entry.contract_sum_without_NDS_BYN
+
+        for key, value in cust_dict.items():
+            if SumsBYN.objects.filter(year=self.year, contract=self.contract, period=key).exists():
+                SumsBYN.objects.filter(year=self.year, contract=self.contract, period=key).update(
+                    contract_sum_without_NDS_BYN=value)
+            else:
+                SumsBYN.objects.create(
+                    year=self.year,
+                    contract=self.contract,
+                    period=key,
+                    contract_sum_without_NDS_BYN=value
+                )
+
+    def get_contract_sum_with_subsidiaries(self):
+        if Contract.objects.filter(related_contract=self.contract).exists():
+            only_subs = 0
+            for contract in Contract.objects.filter(related_contract=self.contract):
+                only_subs += SumsBYN.objects.get(contract_id=contract.id, year=self.year, period='year').contract_sum_with_NDS_BYN
+            sum_with_subs = SumsBYN.objects.get(contract=self.contract, year=self.year, period='year').contract_sum_with_NDS_BYN
+            sum_with_subs += only_subs
+            SumsBYN.objects.filter(contract=self.contract, year=self.year, period='year').update(contract_total_sum_with_sub_BYN=sum_with_subs)
+        else:
+            SumsBYN.objects.filter(contract=self.contract, year=self.year, period='year').update(
+                contract_total_sum_with_sub_BYN=self.contract_sum_with_NDS_BYN)
+
+
+    def get_sums_forecast_total(self):
+        months = ('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
+        target_periods = [
+            ('year', months[:]),
+            ('1quart', months[:3]),
+            ('2quart', months[3:6]),
+            ('3quart', months[6:9]),
+            ('4quart', months[9:]),
+            ("6months", months[:6]),
+            ("9months", months[:9]),
+            ("10months", months[:10]),
+            ("11months", months[:11]),
+        ]
+        cust_dict = {}
+        custom_set = SumsBYN.objects.filter(year=self.year, contract=self.contract, period__in=months)
+        for entry in custom_set:
+            for custom_period in target_periods:
+                if entry.period in custom_period[1]:
+                    try:
+                        x = cust_dict[custom_period[0]]
+                        x += entry.forecast_total
+                        cust_dict[custom_period[0]] = x
+                    except:
+                        cust_dict[custom_period[0]] = entry.forecast_total
+
+        for key, value in cust_dict.items():
+            if SumsBYN.objects.filter(year=self.year, contract=self.contract, period=key).exists():
+                SumsBYN.objects.filter(year=self.year, contract=self.contract, period=key).update(
+                    forecast_total=value)
+            else:
+                SumsBYN.objects.create(
+                    year=self.year,
+                    contract=self.contract,
+                    period=key,
+                    forecast_total=value
+                )
+
+    def get_sums_fact_total(self):
+        months = ('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
+        target_periods = [
+            ('year', months[:]),
+            ('1quart', months[:3]),
+            ('2quart', months[3:6]),
+            ('3quart', months[6:9]),
+            ('4quart', months[9:]),
+            ("6months", months[:6]),
+            ("9months", months[:9]),
+            ("10months", months[:10]),
+            ("11months", months[:11]),
+        ]
+        cust_dict = {}
+        custom_set = SumsBYN.objects.filter(year=self.year, contract=self.contract, period__in=months)
+        for entry in custom_set:
+            for custom_period in target_periods:
+                if entry.period in custom_period[1]:
+                    try:
+                        x = cust_dict[custom_period[0]]
+                        x += entry.fact_total
+                        cust_dict[custom_period[0]] = x
+                    except:
+                        cust_dict[custom_period[0]] = entry.fact_total
+
+        for key, value in cust_dict.items():
+            if SumsBYN.objects.filter(year=self.year, contract=self.contract, period=key).exists():
+                SumsBYN.objects.filter(year=self.year, contract=self.contract, period=key).update(
+                    fact_total=value)
+            else:
+                SumsBYN.objects.create(
+                    year=self.year,
+                    contract=self.contract,
+                    period=key,
+                    fact_total=value
+                )
+
+    def get_sums_economy_total(self):
+        custom_set = SumsBYN.objects.filter(year=self.year, contract=self.contract, period__contains='quart')
+        sum_year = 0
+        for entry in custom_set:
+            quart_economy_total = entry.plan_sum_SAP - entry.contract_sum_without_NDS_BYN
+            sum_year += entry.economy_total
+            print(quart_economy_total)
+            if SumsBYN.objects.filter(year=self.year, contract=self.contract, period='year').exists():
+                SumsBYN.objects.filter(year=self.year, contract=self.contract, period='year').update(
+                    economy_total=sum_year)
+                SumsBYN.objects.filter(year=self.year, contract=self.contract, period=entry.period).update(
+                    economy_total=quart_economy_total)
+            else:
+                SumsBYN.objects.create(
+                    year=self.year,
+                    contract=self.contract,
+                    period='year',
+                    economy_total=sum_year
+                )
+
     def save(self, *args, **kwargs):
+
         self.economy_total = self.plan_sum_SAP - self.contract_sum_without_NDS_BYN
         self.economy_contract_result = self.contract_sum_without_NDS_BYN - self.plan_sum_SAP
         if self.contract_sum_without_NDS_BYN:
@@ -650,33 +791,18 @@ class SumsBYN(models.Model):
         else:
             self.economy_total_absolute = 0
             self.total_sum_unsigned_contracts = self.plan_sum_SAP
+
         super().save(*args, **kwargs)
+        self.get_sums_plan_sum_SAP()
+        self.get_sums_contract_sum_without_NDS_BYN()
+        self.get_contract_sum_with_subsidiaries()
+        self.get_sums_forecast_total()
+        self.get_sums_fact_total()
+        self.get_sums_economy_total()
 
     def __str__(self):
         try:
             return 'Показатели договора %s в белорусских рублях за %s год %s' % (self.contract, self.year, self.period)
-        except:
-            return 'Ошибка в данных'
-
-
-class ContractPaymentSchedule(models.Model):
-    class Meta:
-        verbose_name = 'График платежей по договору'
-        verbose_name_plural = 'Графики платежей по договору'
-
-    contract = models.ForeignKey(
-        Contract,
-        verbose_name="Договора",
-        on_delete=models.CASCADE
-    )
-    payment_date = models.DateField(
-        verbose_name="Дата платежа"
-    )
-
-    def __str__(self):
-        try:
-            return 'График платежей по договору : %s, оплата до: %s' % (self.contract,
-                                                                        self.payment_date)
         except:
             return 'Ошибка в данных'
 
@@ -697,7 +823,28 @@ class ContractRemarks(models.Model):
 
     def __str__(self):
         try:
-            return 'Примечание к Договору %s' % (self.contract)
+            return f'Примечание к Договору {self.contract}'
+        except:
+            return 'Ошибка в данных'
+
+
+class ContractPaymentSchedule(models.Model):
+    class Meta:
+        verbose_name = 'График платежей по договору'
+        verbose_name_plural = 'Графики платежей по договору'
+
+    contract = models.ForeignKey(
+        Contract,
+        verbose_name="Договора",
+        on_delete=models.CASCADE
+    )
+    payment_date = models.DateField(
+        verbose_name="Дата платежа"
+    )
+
+    def __str__(self):
+        try:
+            return f'График платежей по договору : {self.contract}, оплата до: {self.payment_date}'
         except:
             return 'Ошибка в данных'
 
@@ -722,7 +869,8 @@ class Planning(models.Model):
     FinanceCosts = models.ForeignKey(
         FinanceCosts,
         verbose_name="Статья финансирования",
-        on_delete=models.DO_NOTHING
+        on_delete=models.DO_NOTHING,
+        related_name='with_planning',
     )
     curator = models.ForeignKey(
         Curator,
@@ -769,273 +917,14 @@ class Planning(models.Model):
         default=0,
         null=True
     )
-    def __str__(self):
-        try:
-            return 'Планирование %s год, по куратору %s, ст. фин %s' % (self.year, self.curator, self.FinanceCosts)
-        except:
-            return 'Ошибка в данных'
+    period = models.DateField( # TODO DELL IT AWAY
+        verbose_name="Период"
+    )
 
+    def __str__(self):
+        return f'{self.FinanceCosts.title} : {self.curator.title}'
+        
     def save(self, *args, **kwargs):
         self.q_all = self.q_1 + self.q_2 + self.q_3 + self.q_4
         super().save(*args, **kwargs)
 
-
-class AnalysisPlanFulfilmentSums(models.Model):
-    class Meta:
-        verbose_name = 'Анализ выполнения плана, суммы'
-        verbose_name_plural = 'Анализ выполнения плана, суммы'
-
-    PERIODS = [
-        ("year", "year"),
-        ("1quart", "1 quarter"),
-        ("2quart","2 quarter"),
-        ("3quart", "3 quarter"),
-        ("4quart", "4 quarter"),
-        ("6months", "6months"),
-        ("9months", "9months")
-    ]
-    YEARS = [
-        ("2018", "2018"),
-        ("2019", "2019"),
-        ("2020", "2020"),
-        ("2021", "2021"),
-        ("2022", "2022"),
-        ("2023", "2023"),
-        ("2024", "2024"),
-        ("2025", "2025"),
-    ]
-    year = models.CharField(
-        verbose_name="Год",
-        choices=YEARS,
-        max_length=4
-    )
-    period = models.CharField(
-        choices=PERIODS,
-        verbose_name="Период",
-        max_length=15
-    )
-    finance_cost = models.ForeignKey(
-        FinanceCosts,
-        on_delete=models.DO_NOTHING,
-        verbose_name="Статья финансирования"
-    )
-    curator = models.ForeignKey(
-        Curator,
-        on_delete=models.DO_NOTHING,
-        verbose_name="Куратор/Подразделение"
-    )
-    plannned_sum = models.DecimalField(
-        verbose_name="Лимит средств (запланировано БПиЭА)",
-        decimal_places=2,
-        max_digits=12
-    )
-    contract_planned_sum = models.DecimalField(
-        verbose_name="План по всем договорам",
-        decimal_places=2,
-        max_digits=12
-    )
-    signed_contract_sum = models.DecimalField(
-        verbose_name="Сумма заключенных договоров",
-        decimal_places=2,
-        max_digits=12
-    )
-    fact_contract_sum = models.DecimalField(
-        verbose_name="Фактическое выполнение всех договоров",
-        decimal_places=2,
-        max_digits=12
-    )
-    forecast_contract_sum = models.DecimalField(
-        verbose_name="Прогноз выполнения всех договоров",
-        decimal_places=2,
-        max_digits=12
-    )
-    percent_of_contracts_fulfilment = models.DecimalField(
-        verbose_name="Процент выполнения плана",
-        decimal_places=2,
-        max_digits=12
-    )
-
-    def __str__(self):
-        try:
-            return 'Аналитика выполнения плана, суммы,  за %s год, %s квартал по куратору %s, ст. фин %s' % (self.year,
-                                                                                                             self.period,
-                                                                                                             self.curator,
-                                                                                                             self.finance_cost)
-        except:
-            return 'Ошибка в данных'
-
-
-class AnalysisPlanFulfilmentContractsQuantity(models.Model):
-    PERIODS = [
-        ("year", "year"),
-        ("1quart", "1 quarter"),
-        ("2quart","2 quarter"),
-        ("3quart", "3 quarter"),
-        ("4quart", "4 quarter"),
-        ("6months", "6months"),
-        ("9months", "9months")
-    ]
-    YEARS = [
-        ("2018", "2018"),
-        ("2019", "2019"),
-        ("2020", "2020"),
-        ("2021", "2021"),
-        ("2022", "2022"),
-        ("2023", "2023"),
-        ("2024", "2024"),
-        ("2025", "2025"),
-    ]
-    year = models.CharField(
-        verbose_name="Год",
-        choices=YEARS,
-        max_length=4
-    )
-    period = models.CharField(
-        choices=PERIODS,
-        verbose_name="Период",
-        max_length=15
-    )
-
-    finance_cost = models.ForeignKey(
-        FinanceCosts,
-        on_delete=models.DO_NOTHING,
-        verbose_name="Статья финансирования"
-    )
-    curator = models.ForeignKey(
-        Curator,
-        on_delete=models.DO_NOTHING,
-        verbose_name="Куратор/Подразделение"
-    )
-    contract_type = models.ForeignKey(
-        ContractType,
-        on_delete=models.DO_NOTHING,
-        verbose_name="Центр/Филиал"
-    )
-    contracts_quantity_total = models.PositiveIntegerField(
-        verbose_name="Общее количество договоров"
-    )
-    signed_contracts_quantity = models.PositiveIntegerField(
-        verbose_name="Количество заключенных договоров"
-    )
-
-    def __str__(self):
-        try:
-            return 'Аналитика выполнения плана, количество договоров, за %s год, %s квартал по куратору %s, ст. фин %s' % (self.year,
-                                                                                                                           self.period,
-                                                                                                                           self.curator,
-                                                                                                                           self.finance_cost)
-        except:
-            return 'Ошибка в данных'
-
-    class Meta:
-        verbose_name = 'Анализ выполнения плана, количество договоров'
-        verbose_name_plural = 'Анализ выполнения плана, количество договоров'
-
-
-class DeltaAnalysis(models.Model):
-    class Meta:
-        verbose_name = 'Анализ отклонений по всем договорам'
-        verbose_name_plural = 'Анализ отклонений по всем договорам'
-
-    PERIODS = [
-        ("year", "year"),
-        ("1quart", "1 quarter"),
-        ("2quart", "2 quarter"),
-        ("3quart", "3 quarter"),
-        ("4quart", "4 quarter"),
-        ("6months", "6months"),
-        ("9months", "9months")
-    ]
-    YEARS = [
-        ("2018", "2018"),
-        ("2019", "2019"),
-        ("2020", "2020"),
-        ("2021", "2021"),
-        ("2022", "2022"),
-        ("2023", "2023"),
-        ("2024", "2024"),
-        ("2025", "2025"),
-    ]
-    year = models.CharField(
-        verbose_name="Год",
-        choices=YEARS,
-        max_length=4
-    )
-    period = models.CharField(
-        choices=PERIODS,
-        verbose_name="Период",
-        max_length=15
-    )
-    finance_cost = models.ForeignKey(
-        FinanceCosts,
-        on_delete=models.DO_NOTHING,
-        verbose_name="Статья финансирования"
-    )
-    curator = models.ForeignKey(
-        Curator,
-        on_delete=models.DO_NOTHING,
-        verbose_name="Куратор/Подразделение"
-    )
-    delta_limit_plan_sum_sap = models.DecimalField(
-        verbose_name="Отклонение: Лимит - Плановая сумма САП",
-        decimal_places=2,
-        max_digits=12
-    )
-    delta_limit_signed_contracts_sum = models.DecimalField(
-        verbose_name="Отклонение: Лимит - Сумма заключенных договоров",
-        decimal_places=2,
-        max_digits=12
-    )
-    delta_limit_forecast = models.DecimalField(
-        verbose_name="Отклонение: Лимит - Прогноз выполнения договоров",
-        decimal_places=2,
-        max_digits=12
-    )
-    delta_limit_fact = models.DecimalField(
-        verbose_name="Отклонение: Лимит - Фактическое выполнение договоров",
-        decimal_places=2,
-        max_digits=12
-    )
-    delta_plan_sum_sap_signed_contracts_sum = models.DecimalField(
-        verbose_name="Отклонение: Плановая сумма САП - Сумма заключенных договоров",
-        decimal_places=2,
-        max_digits=12
-    )
-    delta_plan_sum_sap_forecast = models.DecimalField(
-        verbose_name="Отклонение: Плановая сумма САП - Прогноз по всем договорам",
-        decimal_places=2,
-        max_digits=12
-    )
-    delta_plan_sum_sap_forecast_signed_contracts = models.DecimalField(
-        verbose_name="Отклонение: Плановая сумма САП - Прогноз по заключенным договорам",
-        decimal_places=2,
-        max_digits=12
-    )
-    delta_plan_sum_sap_fact = models.DecimalField(
-        verbose_name="Отклонение: Плановая сумма САП - Фактическое выполнение договоров",
-        decimal_places=2,
-        max_digits=12
-    )
-    delta_signed_contracts_sum_forecat = models.DecimalField(
-        verbose_name="Отклонение: Сумма заключенных договоров - Прогноз исполнения заключенных договоров",
-        decimal_places=2,
-        max_digits=12
-    )
-    delta_signed_contracts_sum_fact = models.DecimalField(
-        verbose_name="Отклонение: Сумма заключенных договоров - Фактическое исполнение",
-        decimal_places=2,
-        max_digits=12
-    )
-    delta_forecast_fact = models.DecimalField(
-        verbose_name="Отклонение: Прогноз по всем договорам - Фактическое исполнение",
-        decimal_places=2,
-        max_digits=12
-    )
-    def __str__(self):
-        try:
-            return 'Аналитика отклонений по всем договорам за %s год, %s квартал по куратору %s, ст. фин %s' % (self.year,
-                                                                                                                self.period,
-                                                                                                                self.curator,
-                                                                                                                self.finance_cost)
-        except:
-            return 'Ошибка в данных'
